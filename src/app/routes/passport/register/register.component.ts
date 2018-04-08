@@ -72,6 +72,10 @@ export class UserRegisterComponent implements OnDestroy {
     interval$: any;
 
     getCaptcha() {
+        if (this.mobile.invalid) {
+            this.msg.error('请输入正确的手机号码！', { nzDuration: 1000 });
+            return;
+        }
         this.count = 59;
         this.interval$ = setInterval(() => {
             this.count -= 1;

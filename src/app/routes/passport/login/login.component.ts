@@ -10,54 +10,65 @@ import { environment } from '@env/environment';
 @Component({
     selector: 'passport-login',
     templateUrl: './login.component.html',
-    styleUrls: [ './login.component.less' ],
-    providers: [ SocialService ]
+    styleUrls: ['./login.component.less'],
+    providers: [SocialService]
 })
 export class UserLoginComponent implements OnDestroy {
 
     form: FormGroup;
     error = '';
-    type = 0;
+    type = 1;
     loading = false;
+    count = 0;
+    interval$: any;
 
-    constructor(
-        fb: FormBuilder,
-        private router: Router,
-        public msg: NzMessageService,
-        private modalSrv: NzModalService,
-        private settingsService: SettingsService,
-        private socialService: SocialService,
-        @Optional() @Inject(ReuseTabService) private reuseTabService: ReuseTabService,
-        @Inject(DA_SERVICE_TOKEN) private tokenService: TokenService) {
+    constructor(fb: FormBuilder,
+                private router: Router,
+                public msg: NzMessageService,
+                private modalSrv: NzModalService,
+                private settingsService: SettingsService,
+                private socialService: SocialService,
+                @Optional() @Inject(ReuseTabService) private reuseTabService: ReuseTabService,
+                @Inject(DA_SERVICE_TOKEN) private tokenService: TokenService) {
         this.form = fb.group({
             userName: [null, [Validators.required, Validators.minLength(5)]],
-            password: [null, Validators.required],
+            password: [null, [Validators.required, Validators.pattern(/^\d{6}$/)]],
             mobile: [null, [Validators.required, Validators.pattern(/^1\d{10}$/)]],
-            captcha: [null, [Validators.required]],
+            captcha: [null, [Validators.required, Validators.pattern(/^\d{6}$/)]],
             remember: [true]
         });
         modalSrv.closeAll();
     }
 
     // region: fields
+    get userName() {
+        return this.form.controls.userName;
+    }
 
-    get userName() { return this.form.controls.userName; }
-    get password() { return this.form.controls.password; }
-    get mobile() { return this.form.controls.mobile; }
-    get captcha() { return this.form.controls.captcha; }
+    get password() {
+        return this.form.controls.password;
+    }
+
+    get mobile() {
+        return this.form.controls.mobile;
+    }
+
+    get captcha() {
+        return this.form.controls.captcha;
+    }
 
     // endregion
-
     switch(ret: any) {
+        window.console.log('log', ret);
         this.type = ret.index;
     }
 
     // region: get captcha
-
-    count = 0;
-    interval$: any;
-
     getCaptcha() {
+        if (this.mobile.invalid) {
+            this.msg.error('请输入正确的手机号码！', { nzDuration: 1000 });
+            return;
+        }
         this.count = 59;
         this.interval$ = setInterval(() => {
             this.count -= 1;
@@ -67,7 +78,6 @@ export class UserLoginComponent implements OnDestroy {
     }
 
     // endregion
-
     submit() {
         this.error = '';
         if (this.type === 0) {
@@ -99,7 +109,7 @@ export class UserLoginComponent implements OnDestroy {
             this.tokenService.set({
                 token: '123456789',
                 name: this.userName.value,
-                email: `cipchk@qq.com`,
+                email: `true@163.com`,
                 id: 10000,
                 time: +new Date
             });
@@ -108,7 +118,6 @@ export class UserLoginComponent implements OnDestroy {
     }
 
     // region: social
-
     open(type: string, openType: SocialOpenType = 'href') {
         let url = ``;
         let callback = ``;
@@ -144,7 +153,6 @@ export class UserLoginComponent implements OnDestroy {
     }
 
     // endregion
-
     ngOnDestroy(): void {
         if (this.interval$) clearInterval(this.interval$);
     }
